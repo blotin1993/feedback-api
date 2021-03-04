@@ -3,15 +3,10 @@ package main
 import (
 	"log"
 
+	_ "github.com/joho/godotenv/autoload"
+
 	"github.com/blotin1993/feedback-api/db"
-	//"github.com/vincent/feedback-api/handler"
-	"fmt"
-
-	"github.com/joho/godotenv"
 )
-
-//MyEnv is the container for all the .env variables.
-var MyEnv map[string]string
 
 func main() {
 
@@ -20,11 +15,4 @@ func main() {
 		return
 	}
 
-	//handler.handlers()
-
-	myEnv, err := godotenv.Read()
-	if err == nil {
-		dbURI := MyEnv["DB_URI"]
-		fmt.Println(dbURI)
-	}
 }

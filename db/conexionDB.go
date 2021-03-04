@@ -3,16 +3,19 @@ package db
 import (
 	"context"
 	"log"
+	"os"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+//var dbURI = os.Getenv("DB_URI")
+
 /*MongoCN is the object of connecting to the database*/
 var MongoCN = ConnectionDB()
-var clientOptions = options.Client().ApplyURI("mongodb+srv://blotin:fp6QFdFZg5uffDaO@cluster0.6umd3.mongodb.net/test?authSource=admin&replicaSet=atlas-3vavae-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true")
+var clientOptions = options.Client().ApplyURI(os.Getenv("DB_URI"))
 
-/*ConectarBD is the feature that allows me to connect to the database
+/*ConnectionDB is the feature that allows me to connect to the database
   Returns a connection to the BD of type Mongo Client*/
 func ConnectionDB() *mongo.Client {
 	client, err := mongo.Connect(context.TODO(), clientOptions)
