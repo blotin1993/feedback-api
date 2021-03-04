@@ -22,7 +22,7 @@ func main() {
 
 	//handler.handlers()
 
-	myEnv, err := godotenv.Read()
+	MyEnv, err := godotenv.Read()
 	if err == nil {
 		dbURI := MyEnv["DB_URI"]
 		fmt.Println(dbURI)
