@@ -1,15 +1,15 @@
 package models
- 
+
 import (
-    "go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+//User es el struct de users
 type User struct {
-    
-    ID          		primitive.ObjectID  `bson:"_id,omitempty" json:"id"`
-    Name     			string              `bson:"name" json:"name,omitempty"`
-    Surname   			string              `bson:"surname" json:"surname,omitempty"`
-    Email       		string              `bson:"email" json:"email"`
-    Password    		string              `bson:"password" json:"password,omitempty"`
-    ProfilePicture      string              `bson:"profilePicture" json:"profilePicture,omitempty"`
+	ID             primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Name           string             `bson:"name" json:"name,omitempty"`
+	LastName       string             `bson:"lastname" json:"lastname,omitempty"`
+	Email          string             `bson:"email" json:"email"`
+	Password       string             `bson:"password" json:"password,omitempty"`
+	ProfilePicture string             `bson:"profilePicture" json:"profilePicture,omitempty"`
 }

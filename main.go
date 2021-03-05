@@ -6,6 +6,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 
 	"github.com/blotin1993/feedback-api/db"
+	"github.com/blotin1993/feedback-api/handlers"
 )
 
 func main() {
@@ -14,5 +15,5 @@ func main() {
 		log.Fatal("No connection to the BD")
 		return
 	}
-
+	handlers.SetRoutes()
 }
