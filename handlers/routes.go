@@ -18,6 +18,7 @@ func SetRoutes() {
 	//Endpoints ------------------------------------------------------------------------------------
 	router.HandleFunc("/registro", middleware.ChequeoBD(routers.SignUp)).Methods("POST")
 	router.HandleFunc("/login", middleware.ChequeoBD(routers.Login)).Methods("POST")
+	router.HandleFunc("/feedback", middleware.ChequeoBD(middleware.ValidoJWT(routers.FeedbackTry))).Methods("POST")
 	//-----------------------------------------------------------------------------------------------
 
 	PORT := os.Getenv("PORT")
