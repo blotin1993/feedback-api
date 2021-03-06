@@ -27,6 +27,10 @@ func FeedbackTry(w http.ResponseWriter, r *http.Request) {
 	// Para insertarlo en la base de datos necesitamos mapearlo a un bson
 
 	//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Agregar validación para msg.
+	if len(fb.message) == "" {
+		http.Error(w, "the message must have at least one character", 400)
+		return
+	}
 
 	_, status, err := db.InsertoFeedback(fb)
 
