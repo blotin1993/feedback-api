@@ -2,6 +2,7 @@ package routers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -25,6 +26,22 @@ func FeedbackTry(w http.ResponseWriter, r *http.Request) {
 	fb.ReceiverID = rID
 	fb.Date = time.Now()
 	// Para insertarlo en la base de datos necesitamos mapearlo a un bson
+
+	var jsonBlob = []byte(`[
+	{"Name": "Platypus", "Order": "Monotremata"},
+	{"Name": "Quoll",    "Order": "Dasyuromorphia"}
+	]`)
+	type Animal struct {
+		Name  string
+		Order string
+	}
+	var animals []Animal
+	err := json.Unmarshal(jsonBlob, &animals)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	fmt.Printf("%+v", animals)
+}
 
 	//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Agregar validación para msg.
 	// if len(fb.message) == "" {
