@@ -20,6 +20,7 @@ func SetRoutes() {
 	router.HandleFunc("/login", middleware.ChequeoBD(routers.Login)).Methods("POST")
 	router.HandleFunc("/feedback", middleware.ChequeoBD(middleware.ValidoJWT(routers.FeedbackTry))).Methods("POST")
 	router.HandleFunc("/setProfilePic", middleware.ChequeoBD(middleware.ValidoJWT(routers.SetProfilePicture))).Methods("POST")
+	router.HandleFunc("/getMyPassword", middleware.ChequeoBD(middleware.ValidoJWT(routers.GetMyPassword))).Methods("POST")
 	//-----------------------------------------------------------------------------------------------
 
 	PORT := os.Getenv("PORT")
