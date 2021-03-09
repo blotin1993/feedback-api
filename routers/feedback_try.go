@@ -25,14 +25,12 @@ func FeedbackTry(w http.ResponseWriter, r *http.Request) {
 	fb.ReceiverID = rID
 	fb.Date = time.Now()
 	// Para insertarlo en la base de datos necesitamos mapearlo a un bson
-
 	//-------Feedback validation------
 	//TeamArea validation
 	if len(fb.TeamArea.Message) == 0 {
 		http.Error(w, "the message must have at least one character", 400)
 		return
 	}
-
 	if len(fb.TeamArea.Message) >= 500 {
 		http.Error(w, "must have a maximum of 500 characters", 400)
 		return
