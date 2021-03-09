@@ -1,85 +1,115 @@
 package db
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/md5"
 	"crypto/rand"
-	"encoding/base64"
-	"errors"
+	"encoding/hex"
+	"fmt"
 	"io"
 )
 
+/*Our passwords are encrypted under AES cypher: https://gist.github.com/jpillora/cb46d183eca0710d909a*/
+
+const key = "1234567 1234567 1234567 1234567k"
+
 /*EncryptPassword it is the routine to encrypt passwords*/
 func EncryptPassword(pass string) (string, error) {
-	/* costo := 8 //El algoritmo de encriptación hará (2 elevado al costo) pasados por el texto
-	bytes, err := bcrypt.GenerateFromPassword([]byte(pass), costo)
-	return string(bytes), err */
-	key := "1234567 1234567 1234567 1234567k"
-
-	encryptedPassword, err := encrypt([]byte(key), []byte(pass))
-
+	ciphertext, err := encrypt([]byte(pass), key)
 	if err != nil {
 		return "", err
 	}
-
-	return string(encryptedPassword), nil
+	fmt.Printf("Pasword encriptada antes de guardar el registro: %s", string(ciphertext))
+	return string(ciphertext), nil
 }
 
 /* DecryptPassword it is the routine to decrypt passwords */
 func DecryptPassword(encryptedPass string) (string, error) {
-	key := "1234567 1234567 1234567 1234567k"
-
-	decryptedPassword, err := decrypt([]byte(key), []byte(encryptedPass))
-
+	plaintext, err := decrypt([]byte(encryptedPass), key)
 	if err != nil {
 		return "", err
 	}
-
-	return string(decryptedPassword), nil
+	fmt.Printf("Password desencriptada: %s", string(plaintext))
+	return string(plaintext), nil
 }
 
-//Encrypt receives a map of bytes of the text to encrypt and a key and returns the cyphered thext
-func encrypt(key, text []byte) ([]byte, error) {
-	//NewCipher creates and returns a new cipher.Block.
-	//The key received should be the AES key, either 16/24/32 bytes to select AES-128/AES-192/AES-256
-	//(AES it is a U.S. Federal Information Processing Standards for encripting)
-	block, err := aes.NewCipher(key)
+/* ComparePasswords receives an encrypted password and a unencrypted password and compares them,
+if they match returns true and nil, if there's an error decrypting returns false and the error, and if they not match, returns false and nil*/
+func ComparePasswords(passNotEncrypted, passEncrypted []byte) (bool, error) {
+	pass, err := decrypt(passEncrypted, key)
 
+	fmt.Println("PassInDB: ", string(pass), "PassReceived: ", string(passNotEncrypted))
+
+	if err != nil {
+		return false, err
+	}
+
+	if bytes.Compare([]byte(passNotEncrypted), pass) == 0 {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+//createHash receives a passphrase, key or any string, hash it, then return the hash as a hexadecimal value
+func createHash(key string) string {
+	hasher := md5.New()
+	hasher.Write([]byte(key))
+	return hex.EncodeToString(hasher.Sum(nil))
+}
+
+func encrypt(data []byte, passphrase string) ([]byte, error) {
+	//First we create a new block cipher based on the hashed passphrase(our key)
+	block, err := aes.NewCipher([]byte(createHash(passphrase)))
 	if err != nil {
 		return nil, err
 	}
-	//EncodeToString returns the base64 encoding of text
-	b := base64.StdEncoding.EncodeToString(text)
-	//We build a map of bytes with the AES block size in bytes + the lenght of our text encoded
-	ciphertext := make([]byte, aes.BlockSize+len(b))
-	iv := ciphertext[:aes.BlockSize]
-
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+	//Then we want to wrap it in Galois Counter Mode (GCM) with a standard nonce length (nonce = number that can be only used once)
+	//Galois/Counter Mode (GCM) is a mode of operation for symmetric-key cryptographic block ciphers
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
 		return nil, err
 	}
-	//NewCFBEncrypter returns a Stream which encrypts with cipher feedback mode, using the given Block.
-	//The iv must be the same length as the Block's block size.(IV = Inicialization Vector)
-	cfb := cipher.NewCFBEncrypter(block, iv)
-	//XORKeyStream adds the cipher to our text
-	cfb.XORKeyStream(ciphertext[aes.BlockSize:], []byte(b))
+	nonce := make([]byte, gcm.NonceSize()) //the nonce used for decryption must be the same nonce used for encryption.
+
+	_, errorIo := io.ReadFull(rand.Reader, nonce)
+
+	if errorIo != nil {
+		return nil, errorIo
+	}
+
+	//to make sure our decryption nonce matches the encryption nonce, we will prepend the nonce
+	ciphertext := gcm.Seal(nonce, nonce, data, nil)
 	return ciphertext, nil
 }
 
-func decrypt(key, text []byte) ([]byte, error) {
+func decrypt(data []byte, passphrase string) ([]byte, error) {
+	key := []byte(createHash(passphrase))
+	//we create a new block cipher using a hashed passphrase.
 	block, err := aes.NewCipher(key)
+
 	if err != nil {
 		return nil, err
 	}
-	if len(text) < aes.BlockSize {
-		return nil, errors.New("ciphertext too short")
-	}
-	iv := text[:aes.BlockSize]
-	text = text[aes.BlockSize:]
-	cfb := cipher.NewCFBDecrypter(block, iv)
-	cfb.XORKeyStream(text, text)
-	data, err := base64.StdEncoding.DecodeString(string(text))
+	//we wrap the block cipher in Galois Counter Mode
+	gcm, err := cipher.NewGCM(block)
+
 	if err != nil {
 		return nil, err
 	}
-	return data, nil
+	//then get the nonce size
+	nonceSize := gcm.NonceSize()
+	// we need to separate the nonce and the encrypted data.
+	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
+
+	//we can decrypt the data and return it as plaintext
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return plaintext, nil
 }
