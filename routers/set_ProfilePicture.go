@@ -10,7 +10,7 @@ import (
 	"github.com/blotin1993/feedback-api/models"
 )
 
-/*SetProfilePicture set the profile picture of user.*/
+//SetProfilePicture is used to set the profile picture
 func SetProfilePicture(w http.ResponseWriter, r *http.Request) {
 	file, handler, err := r.FormFile("profilePicture")
 
@@ -18,7 +18,7 @@ func SetProfilePicture(w http.ResponseWriter, r *http.Request) {
 
 	/* The profile picture is stored in "profilePicture" folder that is previously created to make sure
 	that everything is able to work : folder uploads and inside: folder profilePicture*/
-	var fProfilePicture string = "uploads/profilePicture/" + IDUsuario + "." + extension
+	var fProfilePicture string = "uploads/profilePicture/" + IDUser + "." + extension
 
 	f, err := os.OpenFile(fProfilePicture, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
@@ -32,14 +32,14 @@ func SetProfilePicture(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	/*recording de change in the database */
+	/*recording the change in the database */
 	var user models.User
 	var status bool
-	user.ProfilePicture = IDUsuario + "." + extension
+	user.ProfilePicture = IDUser + "." + extension
 
-	status, err = db.ModificoRegistro(user, IDUsuario)
+	status, err = db.ModifyUser(user, IDUser)
 	if err != nil || status == false {
-		http.Error(w, "Error al grabar el avatar en la bd "+err.Error(), http.StatusBadRequest)
+		http.Error(w, "Database error "+err.Error(), http.StatusBadRequest)
 		return
 	}
 

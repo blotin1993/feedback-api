@@ -9,24 +9,22 @@ import (
 	"github.com/blotin1993/feedback-api/models"
 )
 
-//FeedbackTry .
+//FeedbackTry is used to process our feedbacks
 func FeedbackTry(w http.ResponseWriter, r *http.Request) {
 	rID := r.URL.Query().Get("target_id")
 	if len(rID) < 1 {
-		http.Error(w, "Falta el target.......", http.StatusBadRequest)
+		http.Error(w, "ID Error", http.StatusBadRequest)
 		return
 	}
 	var fb models.Feedback
 
-	// decodificamos el body y armamos un registro
 	err := json.NewDecoder(r.Body).Decode(&fb)
 	//
-	fb.IssuerID = IDUsuario
+	fb.IssuerID = IDUser
 	fb.ReceiverID = rID
 	fb.Date = time.Now()
-	// Para insertarlo en la base de datos necesitamos mapearlo a un bson
-	//-------Feedback validation------
-	//TeamArea validation
+
+	//-------Feedback validation------<<<<<<<<<<<<<<<<<<<<<<<<<<<<< TO IMPROVE
 	if len(fb.TeamArea.Message) == 0 {
 		http.Error(w, "the message must have at least one character", 400)
 		return
@@ -113,16 +111,17 @@ func FeedbackTry(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "must have a maximum of 1500 characters", 400)
 		return
 	}
+	//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-	_, status, err := db.InsertoFeedback(fb)
+	_, status, err := db.AddFeedback(fb)
 
 	//si hay un error
 	if err != nil {
-		http.Error(w, "Ocurrió un error al intentar insertar el registro, intentelo nuevamente.  "+err.Error(), 400)
+		http.Error(w, "An error has ocurred. Try again later "+err.Error(), 400)
 		return
 	}
 	if status == false {
-		http.Error(w, "No se ha logrado insertar el tweet.", 400)
+		http.Error(w, "Database error.", 400)
 		return
 	}
 	w.WriteHeader(http.StatusCreated)

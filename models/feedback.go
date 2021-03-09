@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-//Feedback .
+//Feedback structure
 type Feedback struct {
 	IssuerID   string    `bson:"issuer_id,omitempty" json:"issuer_id"`
 	ReceiverID string    `bson:"receiver_id,omitempty" json:"receiver_id"`

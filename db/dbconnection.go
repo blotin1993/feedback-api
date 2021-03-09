@@ -9,14 +9,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-//var dbURI = os.Getenv("DB_URI")
-
-/*MongoCN is the object of connecting to the database*/
+//MongoCN is the db connection object
 var MongoCN = ConnectionDB()
 var clientOptions = options.Client().ApplyURI(os.Getenv("DB_URI"))
 
-/*ConnectionDB is the feature that allows me to connect to the database
-  Returns a connection to the BD of type Mongo Client*/
+//ConnectionDB is the actual function to connect to the db.
 func ConnectionDB() *mongo.Client {
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
