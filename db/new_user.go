@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/blotin1993/feedback-api/auth"
 	"github.com/blotin1993/feedback-api/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -15,7 +16,8 @@ func AddRegister(u models.User) (string, bool, error) {
 
 	db := MongoCN.Database("feedback-db")
 	col := db.Collection("users")
-	u.Password, _ = PassEncrypt(u.Password)
+	var err error
+	u.Password, err = auth.PassEncrypt(u.Password)
 	result, err := col.InsertOne(ctx, u)
 	if err != nil {
 		return "", false, err
