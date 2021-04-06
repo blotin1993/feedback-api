@@ -7,26 +7,39 @@ import (
 
 	"github.com/blotin1993/feedback-api/db"
 	"github.com/blotin1993/feedback-api/models"
+	services "github.com/blotin1993/feedback-api/services/email"
 	"github.com/gin-gonic/gin"
 
 	"github.com/fatih/structs"
 )
 
-// FeedbackTry godoc
-// @Description get string by id, token and newpass
-// @id changepass
-// @Summary is used to handle the mail you get when recovering your password.
-// @Param id query string true "Account ID"
-// @Param token query string true "JWT Token"
-// @Param newpass query string true "New Pass"
-// @Produce plain
-// @Success 201 {string} string "Password has been changed."
+// Feedback  godoc
+// @Description gives feedback to the user
+// @id fb
+// @Summary is used to give feedback to users.
+// @Param target_id query string true "Target ID"
+// @Param feedback body string true "Json body with email and password"
+// @Param Authorization header string true "JWT Token"
+// @Accept  json
+// @Success 201 {string} string "Successful Login."
 // @Header 201 {string} string "Status created"
-// @Failure 400 {string} string "Validation error"
-// @Failure 500 {string} string "An error has ocurred trying to set a new password."
+// @Failure 400 {string} string "Wrong mail or password."
+// @Failure 500 {string} string "Error generating the token."
 // @Failure default {string} string "An error has ocurred"
-// @Router /changePassword [post]
+// @Router /feedback [post]
 func FeedbackTry(c *gin.Context) {
+
+	/* Métricas de Feedback:
+	Let´s work on this.
+	Reach the Goal.
+	Relevant Performance.
+	Master. */
+	validUser, _ := db.GetUser(IDUser)
+	if validUser.Enabled == false {
+		c.String(http.StatusUnauthorized, "User not authorized.")
+		return
+	}
+
 	rID := c.Query("target_id")
 	if len(rID) < 1 {
 		c.String(http.StatusBadRequest, "ID Error")
@@ -38,6 +51,13 @@ func FeedbackTry(c *gin.Context) {
 		c.String(http.StatusBadRequest, "User was not found.")
 		return
 	}
+	validUser, _ = db.GetUser(rID)
+	if validUser.Enabled == false {
+		c.String(http.StatusUnauthorized, "User not authorized to receive feedbacks.")
+		return
+	}
+
+	//checkear con gin
 	var fb models.Feedback
 	err = json.NewDecoder(c.Request.Body).Decode(&fb)
 	if err != nil {
@@ -55,7 +75,7 @@ func FeedbackTry(c *gin.Context) {
 		c.String(http.StatusBadRequest, "Message cannot be longer than 1500 characters")
 		return
 	}
-	if !validateMsgLength(540, fb.TechArea.Message, fb.TeamArea.Message, fb.PerformanceArea.Message) { //40 xq toma saltos de página
+	if !validateMsgLength(541, fb.TechArea.Message, fb.TeamArea.Message, fb.PerformanceArea.Message) { //40 xq toma saltos de página
 		c.String(http.StatusBadRequest, "Area Messages cannot be longer than 500 characters.")
 		return
 	}
@@ -64,6 +84,13 @@ func FeedbackTry(c *gin.Context) {
 	fb.IssuerID = IDUser
 	fb.ReceiverID = rID
 	fb.Date = time.Now()
+
+	// Send email notification
+
+	msg := "Hi " + user.Name + " " + user.LastName + "! \n You have received a new feedback, check it in your dashboard! <a>http:localhost:8080/dashboard</a> \n\n"
+	services.SendEmail(user.Email, "New Feedback Received!", msg)
+
+	//------------------------------
 
 	_, status, err := db.AddFeedback(fb)
 
@@ -88,14 +115,15 @@ func validateMsgLength(maxLen int, Amsg ...string) bool {
 	return true
 }
 
-func hasZeroGroup(gr ...interface{}) bool {
+func hasZeroGroup(group ...interface{}) bool {
 	count := 0
-	for _, field := range gr {
-		if structs.HasZero(field) {
-			count++
+	for _, field := range group {
+		if !structs.HasZero(field) {
+			return true
 		}
+		count++
 	}
-	if count == len(gr) {
+	if count == len(group) {
 		return false
 	}
 	return true

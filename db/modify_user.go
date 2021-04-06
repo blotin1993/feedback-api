@@ -34,6 +34,12 @@ func ModifyUser(u models.User, ID string) (bool, error) {
 		u.Password, _ = auth.PassEncrypt(u.Password)
 		register["password"] = u.Password
 	}
+
+	//Improve
+	if len(u.Name) == 0 && len(u.LastName) == 0 && len(u.ProfilePicture) == 0 && len(u.Password) == 0 {
+		register["enabled"] = u.Enabled
+	}
+
 	updtString := bson.M{
 		"$set": register,
 	}
